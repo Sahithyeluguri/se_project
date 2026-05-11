@@ -1,0 +1,17 @@
+{
+  "name": "se_project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "devDependencies": {
+    "jest": "^30.4.2"
+  },
+  "scripts": {
+    "test": "npm --prefix frontend run test",
+    "test:system": "npm --prefix frontend run test -- --selectProjects system"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

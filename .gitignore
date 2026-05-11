@@ -1,0 +1,11 @@
+# Python
+backend/__pycache__/
+backend/*.pyc
+backend/supportai.db
+
+# The model is 265 MB — too large for Git
+backend/ticket_model_best.pt
+
+# Node
+frontend/node_modules/
+frontend/dist/

@@ -1,0 +1,134 @@
+{\rtf1\ansi\deff0
+{\fonttbl{\f0 Calibri;}{\f1 Courier New;}}
+\fs24
+\b TEST PLAN\b0\par
+\par
+\b Table of Contents\b0\par
+1. Introduction\par
+1.1 Objectives\par
+1.2 Team Members\par
+2. Scope\par
+3. Assumptions / Risks\par
+3.1 Assumptions\par
+3.2 Risks\par
+4. Test Approach\par
+4.1 Test Automation\par
+5. Test Environment\par
+6. Milestones / Deliverables\par
+6.1 Test Schedule\par
+6.2 Deliverables\par
+\par
+\b 1. Introduction\b0\par
+This Test Plan communicates the testing approach for the SupportAI project. It defines the objectives, scope, risks, schedule, test environment, automation strategy, and deliverables for validating the system.\par
+\par
+\b 1.1 Objectives\b0\par
+SupportAI is a web-based support ticketing and routing system with a React frontend and a FastAPI backend backed by SQLite. The objective of testing is to verify that users can log in by role, create and track tickets, allow support agents to resolve assigned tickets, and allow administrators to review tickets and agents. Unit and integration testing are included to validate both isolated logic and end-to-end workflow behavior.\par
+\par
+Phase 1 focuses on the following must-have outcomes:\par
+1. Customer can create a ticket.\par
+2. Customer can view created and resolved tickets.\par
+3. Support agent can view assigned tickets.\par
+4. Support agent can resolve tickets with notes.\par
+5. Admin can review all tickets and agent information.\par
+\par
+\b 1.2 Team Members\b0\par
+Resource Name\tab Role\par
+Project Team\tab Development and Testing\par
+QA / Tester\tab Test design, execution, and reporting\par
+\par
+\b 2. Scope\b0\par
+In scope:\par
+1. Authentication by role: customer, support, admin.\par
+2. Ticket creation and retrieval.\par
+3. Ticket status tracking and resolution.\par
+4. Queue classification, tagging, and assignment logic covered by Jest tests.\par
+5. Unit and integration testing of the provided JavaScript test modules.\par
+\par
+Out of scope:\par
+1. Load and stress testing.\par
+2. Production deployment validation.\par
+3. Migration of legacy documents into the application.\par
+\par
+\b 3. Assumptions / Risks\b0\par
+\b 3.1 Assumptions\b0\par
+1. Jest and required dependencies are installed in the frontend workspace.\par
+2. The test environment is available locally.\par
+3. The provided test data is sufficient for unit and integration coverage.\par
+\par
+\b 3.2 Risks\b0\par
+1. Scope creep may add features not covered by the current test suite.\par
+Mitigation: update test cases with each iteration.\par
+2. Inline self-contained tests may diverge from the live application code if the product changes.\par
+Mitigation: keep the suite synchronized with implementation changes.\par
+3. Environment differences may affect repeatability of test execution.\par
+Mitigation: standardize Node, Jest, and project dependency versions.\par
+\par
+\b 4. Test Approach\b0\par
+The project follows an iterative approach. Testing will include:\par
+1. Unit testing of database helpers, classifiers, tagging, ranking, and assignment logic.\par
+2. Integration testing of login, ticket pipeline, assignment behavior, status transitions, and routing consistency.\par
+3. Exploratory testing for user-facing workflows where needed.\par
+\par
+\b 4.1 Test Automation\b0\par
+Automated tests are implemented using Jest. The current automated suite includes:\par
+1. Unit tests: authentication, transformer engine, priority classifier, queue classifier, type classifier, tag extractor, assignment engine.\par
+2. Integration tests: login and session handling, ticket creation pipeline, assignment under load, ticket status transitions, classifier consistency, repeated-problem routing.\par
+\par
+\b 5. Test Environment\b0\par
+Frontend: React with Vite\par
+Backend: FastAPI\par
+Database: SQLite\par
+Automation Tool: Jest\par
+Execution Command: {\f1 npm test}\f0\par
+\par
+\b 6. Milestones / Deliverables\b0\par
+\b 6.1 Test Schedule\b0\par
+Task Name\tab Effort\par
+Test planning\tab 1 day\par
+Create initial Jest suite\tab 1 day\par
+Execute unit tests\tab 1 day\par
+Execute integration tests\tab 1 day\par
+Review failures and stabilize\tab 1 day\par
+Final reporting\tab 1 day\par
+\par
+\b 6.2 Deliverables\b0\par
+1. Test Plan Word-compatible document.\par
+2. Jest unit and integration test suite.\par
+3. Test execution results.\par
+4. Test status summary.\par
+\par
+\b 7. Test Execution Results\b0\par
+Execution Date: 2026-05-10\par
+Execution Command: {\f1 npm test}\f0\par
+Environment: Local frontend workspace using Jest\par
+\par
+\b Result Summary\b0\par
+Test Suites: 1 passed, 1 total\par
+Tests: 27 passed, 27 total\par
+Snapshots: 0 total\par
+Overall Status: PASS\par
+Execution Time: 0.9 seconds\par
+\par
+\b Executed Coverage Areas\b0\par
+1. Unit testing of authentication and database helper logic.\par
+2. Unit testing of TF-IDF transformer behavior.\par
+3. Unit testing of priority classification.\par
+4. Unit testing of queue classification.\par
+5. Unit testing of ticket type classification.\par
+6. Unit testing of tag extraction.\par
+7. Unit testing of assignment engine behavior.\par
+8. Integration testing of login and session handling.\par
+9. Integration testing of full ticket creation pipeline.\par
+10. Integration testing of assignment behavior under agent load.\par
+11. Integration testing of ticket status transitions.\par
+12. Integration testing of classifier consistency.\par
+13. Integration testing of same-problem routing behavior.\par
+\par
+\b Detailed Outcome\b0\par
+All implemented Jest test cases completed successfully with no failures. The provided self-contained SupportIQ test suite executed as expected in the frontend test environment.\par
+\par
+\b Current Test Files\b0\par
+1. frontend\tests\supportiq.test.cjs\par
+2. frontend\jest.config.cjs\par
+\par
+}
