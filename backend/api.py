@@ -23,6 +23,9 @@ _ranker    = None
 def get_predictor():
     global _predictor
     if _predictor is None:
+        if os.environ.get("MOCK_MODE", "false").lower() == "true":
+            print("[ML]  MOCK_MODE enabled — skipping model load")
+            return None
         try:
             from ticket_ai import TicketPredictor
             pt = os.environ.get("MODEL_PATH", "ticket_model_best.pt")
