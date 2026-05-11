@@ -15,7 +15,7 @@
 //   }
 //   return res.json();
 // }
-const BASE_URL = import.meta.env.VITE_API_URL || "https://supportai-backend.onrender.com";
+const BASE_URL = "https://supportai-backend-qhmk.onrender.com";
 
 async function req(method, path, body) {
   const res = await fetch(BASE_URL + path, {
