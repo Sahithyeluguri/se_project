@@ -1,7 +1,21 @@
 // All backend calls go through here.
 // Swap BASE_URL to your server address when deploying.
 
-const BASE_URL = "";  // empty = same origin (works with Vite proxy)
+// const BASE_URL = "https://supportai-backend-qhmk.onrender.com";  // empty = same origin (works with Vite proxy)
+
+// async function req(method, path, body) {
+//   const res = await fetch(BASE_URL + path, {
+//     method,
+//     headers: { "Content-Type": "application/json" },
+//     body: body ? JSON.stringify(body) : undefined,
+//   });
+//   if (!res.ok) {
+//     const err = await res.json().catch(() => ({}));
+//     throw new Error(err.detail || `HTTP ${res.status}`);
+//   }
+//   return res.json();
+// }
+const BASE_URL = import.meta.env.VITE_API_URL || "https://supportai-backend.onrender.com";
 
 async function req(method, path, body) {
   const res = await fetch(BASE_URL + path, {

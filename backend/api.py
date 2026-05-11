@@ -20,21 +20,19 @@ from pydantic import BaseModel
 _predictor = None
 _ranker    = None
 
-def get_predictor():
-    global _predictor
-    if _predictor is None:
-        if os.environ.get("MOCK_MODE", "false").lower() == "true":
-            print("[ML]  MOCK_MODE enabled — skipping model load")
-            return None
-        try:
-            from ticket_ai import TicketPredictor
-            pt = os.environ.get("MODEL_PATH", "ticket_model_best.pt")
-            _predictor = TicketPredictor(weights_path=pt)
-            print(f"[ML]  Model loaded from {pt}")
-        except Exception as e:
-            print(f"[ML]  WARNING: could not load model — {e}")
-            print("[ML]  Running in MOCK mode (predictions will be dummy values)")
-    return _predictor
+# def get_predictor():
+#     global _predictor
+#     if _predictor is None:
+#         try:
+#             from ticket_ai import TicketPredictor
+#             pt = os.environ.get("MODEL_PATH", "ticket_model_best.pt")
+#             _predictor = TicketPredictor(weights_path=pt)
+#             print(f"[ML]  Model loaded from {pt}")
+#         except Exception as e:
+#             print(f"[ML]  WARNING: could not load model — {e}")
+#             print("[ML]  Running in MOCK mode (predictions will be dummy values)")
+#     return _predictor
+
 
 def get_ranker():
     global _ranker
@@ -75,13 +73,19 @@ def get_db():
 # ---------------------------------------------------------------------------
 app = FastAPI(title="SupportAI API", version="1.0.0")
 
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=["*"],          # tighten in production
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],          # tighten in production
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_credentials=True,
 )
-
 @app.on_event("startup")
 def startup():
     init_db()
