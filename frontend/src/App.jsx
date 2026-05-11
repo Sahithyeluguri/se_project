@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { API } from "./api.js";
-
+// Wake up backend on app load
+fetch("https://supportai-backend.onrender.com/health").catch(() => {});
 const C = {
   bg:"#0A0C10",surface:"#111318",border:"#1E2128",borderHi:"#2E3340",
   accent:"#4F8EF7",accentDim:"#1A2D4F",green:"#22C55E",greenDim:"#0D2E1A",
