@@ -101,6 +101,79 @@ describe("System | App portal flows", () => {
     expect(screen.getByRole("button", { name: /my tickets \(1\)/i })).toBeInTheDocument();
   });
 
+  test("customer small-talk does not create a ticket", async () => {
+    API.login.mockResolvedValue({
+      id: 1,
+      username: "customer1",
+      name: "Customer One",
+      role: "customer",
+    });
+    API.myTickets.mockResolvedValue([]);
+
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /customer/i }));
+    fireEvent.change(screen.getByLabelText("USERNAME"), {
+      target: { value: "customer1" },
+    });
+    fireEvent.change(screen.getByLabelText("PASSWORD"), {
+      target: { value: "pass123" },
+    });
+    fireEvent.click(screen.getAllByRole("button", { name: /sign in/i })[1]);
+
+    expect(await screen.findByText("Support Chat")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByPlaceholderText("Type your message..."), {
+      target: { value: "hi" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+
+    jest.advanceTimersByTime(700);
+    expect(await screen.findByText(/doesn't look like a support issue yet/i)).toBeInTheDocument();
+    expect(API.createTicket).not.toHaveBeenCalled();
+  });
+
+  test("customer must provide meaningful detail in the second chat step", async () => {
+    API.login.mockResolvedValue({
+      id: 1,
+      username: "customer1",
+      name: "Customer One",
+      role: "customer",
+    });
+    API.myTickets.mockResolvedValue([]);
+
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /customer/i }));
+    fireEvent.change(screen.getByLabelText("USERNAME"), {
+      target: { value: "customer1" },
+    });
+    fireEvent.change(screen.getByLabelText("PASSWORD"), {
+      target: { value: "pass123" },
+    });
+    fireEvent.click(screen.getAllByRole("button", { name: /sign in/i })[1]);
+
+    expect(await screen.findByText("Support Chat")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByPlaceholderText("Type your message..."), {
+      target: { value: "Production API outage" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+
+    jest.advanceTimersByTime(700);
+    expect(await screen.findByText(/describe the issue in more detail/i)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByPlaceholderText("Type your message..."), {
+      target: { value: "ok" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+
+    jest.advanceTimersByTime(700);
+    expect(await screen.findByText(/i need a bit more detail before i create a ticket/i)).toBeInTheDocument();
+    expect(screen.queryByText(/ready to submit/i)).not.toBeInTheDocument();
+    expect(API.createTicket).not.toHaveBeenCalled();
+  });
+
   test("support agent can resolve an assigned ticket", async () => {
     API.login.mockResolvedValue({
       id: 7,

@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { API } from "./api.js";
-// Wake up backend on app load
-fetch("https://supportai-backend.onrender.com/health").catch(() => {});
 const C = {
   bg:"#0A0C10",surface:"#111318",border:"#1E2128",borderHi:"#2E3340",
   accent:"#4F8EF7",accentDim:"#1A2D4F",green:"#22C55E",greenDim:"#0D2E1A",
@@ -26,6 +24,34 @@ const GLOBAL_CSS=`
 
 const pColor=p=>p==="high"?C.red:p==="medium"?C.amber:C.green;
 const sColor=s=>s==="resolved"?C.green:s==="in_progress"?C.amber:C.accent;
+
+const CHAT_NOISE_PHRASES=new Set([
+  "hi","hii","hiii","hello","hey","yo","sup","good morning","good afternoon","good evening",
+  "bye","goodbye","ok","okay","kk","thanks","thank you","thx",
+]);
+const CHAT_STOPWORDS=new Set([
+  "a","an","the","and","or","but","to","for","of","on","in","at","my","me","i","we","you","it","is","are",
+  "was","were","be","been","am","this","that","these","those","please","kindly","just","need",
+]);
+const ISSUE_SIGNAL_WORDS=new Set([
+  "access","account","api","billing","blocked","broken","bug","cannot","cant","charge","charged","checkout",
+  "connect","crash","crashed","delay","delayed","down","error","failed","fails","failure","issue","invoice",
+  "login","network","order","outage","password","payment","problem","refund","reset","return","returns",
+  "security","server","slow","support","ticket","unavailable","unauthorized","vpn","wifi","wrong",
+]);
+
+function hasMeaningfulTicketContent(subject="",body=""){
+  const combined=`${subject} ${body}`.trim().toLowerCase();
+  const normalized=combined.replace(/[^a-z0-9\s']/g," ").replace(/\s+/g," ").trim();
+  if(!normalized)return false;
+  if(CHAT_NOISE_PHRASES.has(normalized))return false;
+
+  const tokens=normalized.split(" ").filter(Boolean);
+  const meaningful=tokens.filter(t=>!CHAT_STOPWORDS.has(t));
+  const hasIssueSignal=meaningful.some(t=>ISSUE_SIGNAL_WORDS.has(t) || t.length>=7);
+
+  return hasIssueSignal || meaningful.length>=3;
+}
 
 const Badge=({label,color=C.accent})=>(
   <span style={{display:"inline-block",padding:"2px 10px",borderRadius:4,fontSize:11,
@@ -352,9 +378,17 @@ function CustomerPortal({user,onLogout}){
     const val=input.trim();if(!val)return;
     setMessages(m=>[...m,{from:"user",text:val}]);setInput("");
     if(stage==="idle"){
+      if(!hasMeaningfulTicketContent(val)){
+        botSay("That doesn't look like a support issue yet. Briefly describe the problem, for example: \"VPN not connecting\" or \"Payment failed during checkout\".");
+        return;
+      }
       setDraft({subject:val});setStage("body");
       botSay("Got it. Can you describe the issue in more detail?");
     }else if(stage==="body"){
+      if(!hasMeaningfulTicketContent(val)){
+        botSay("I need a bit more detail before I create a ticket. Tell me what is failing, affected, or showing an error.");
+        return;
+      }
       setDraft(d=>({...d,body:val}));setStage("confirm");
       botSay(`Ready to submit:\n\nSubject: "${draft.subject}"\nDetails: "${val}"\n\nType "yes" to confirm or "no" to cancel.`);
     }else if(stage==="confirm"){

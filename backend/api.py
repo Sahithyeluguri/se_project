@@ -19,19 +19,24 @@ from pydantic import BaseModel
 # ---------------------------------------------------------------------------
 _predictor = None
 _ranker    = None
+BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# def get_predictor():
-#     global _predictor
-#     if _predictor is None:
-#         try:
-#             from ticket_ai import TicketPredictor
-#             pt = os.environ.get("MODEL_PATH", "ticket_model_best.pt")
-#             _predictor = TicketPredictor(weights_path=pt)
-#             print(f"[ML]  Model loaded from {pt}")
-#         except Exception as e:
-#             print(f"[ML]  WARNING: could not load model — {e}")
-#             print("[ML]  Running in MOCK mode (predictions will be dummy values)")
-#     return _predictor
+
+def _backend_path(*parts: str) -> str:
+    return os.path.join(BACKEND_DIR, *parts)
+
+def get_predictor():
+    global _predictor
+    if _predictor is None:
+        try:
+            from ticket_ai import TicketPredictor
+            pt = os.environ.get("MODEL_PATH", _backend_path("ticket_model_best.pt"))
+            _predictor = TicketPredictor(weights_path=pt)
+            print(f"[ML]  Model loaded from {pt}")
+        except Exception as e:
+            print(f"[ML]  WARNING: could not load model — {e}")
+            print("[ML]  Running in MOCK mode (predictions will be dummy values)")
+    return _predictor
 
 
 def get_ranker():
@@ -47,10 +52,10 @@ def get_ranker():
 # ---------------------------------------------------------------------------
 # Database
 # ---------------------------------------------------------------------------
-DB_PATH = os.environ.get("DB_PATH", "supportai.db")
+DB_PATH = os.environ.get("DB_PATH", _backend_path("supportai.db"))
 
 def init_db():
-    with open("schema.sql") as f:
+    with open(_backend_path("schema.sql"), encoding="utf-8") as f:
         sql = f.read()
     con = sqlite3.connect(DB_PATH)
     con.executescript(sql)
@@ -249,7 +254,7 @@ def create_ticket(req: NewTicketRequest):
     assigned   = None
     agent_name = None
 
-    if ranker and agent_rows:
+    if ranker and agent_rows and embedding:
         ranked = ranker.rank_agents(
             ticket_embedding = embedding,
             ticket_queue     = queue,
