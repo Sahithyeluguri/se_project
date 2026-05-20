@@ -240,6 +240,17 @@ function LoginScreen({onLogin}){
     catch(e){setError(e.message);}
     finally{setLoading(false);}
   };
+  const handleForgotPassword=async()=>{
+    setError("");setLoading(true);
+    try{
+      const res=await API.forgotPassword({username,password,role});
+      setMode("login");
+      setPassword("");
+      setError(res.message||"Password updated. Sign in with the new password.");
+    }
+    catch(e){setError(e.message);}
+    finally{setLoading(false);}
+  };
   return(
     <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",
       background:`radial-gradient(ellipse 80% 60% at 50% -10%, ${C.accentDim}, ${C.bg})`,padding:24}}>
@@ -281,15 +292,15 @@ function LoginScreen({onLogin}){
                 background:"none",border:"none",color:C.textSec,fontSize:20}}>←</button>
               <Mono>{ROLES.find(r=>r.key===role)?.label} {mode}</Mono>
             </div>
-            {role==="customer"&&(
+            {role!=="admin"&&(
               <div style={{display:"flex",gap:8,marginBottom:16}}>
-                {["login","signup"].map(opt=>(
+                {["login",...(role==="customer"?["signup"]:[]),"forgot"].map(opt=>(
                   <button key={opt} onClick={()=>{setMode(opt);setError("");}} style={{
                     flex:1,padding:"10px 12px",borderRadius:8,
                     border:`1px solid ${mode===opt?C.accent:C.border}`,
                     background:mode===opt?C.accentDim:C.surface,
                     color:mode===opt?C.accent:C.textSec,fontSize:13,fontWeight:600}}>
-                    {opt==="login"?"Sign In":"Sign Up"}
+                    {opt==="login"?"Sign In":opt==="signup"?"Sign Up":"Forgot Password"}
                   </button>
                 ))}
               </div>
@@ -300,30 +311,30 @@ function LoginScreen({onLogin}){
                 {label:"EMAIL",value:email,set:setEmail,type:"email"},
               ]:[]),
               {label:"USERNAME",value:username,set:setUsername,type:"text"},
-              {label:"PASSWORD",value:password,set:setPassword,type:"password"}].map(f=>(
+              {label:mode==="forgot"?"NEW PASSWORD":"PASSWORD",value:password,set:setPassword,type:"password"}].map(f=>(
               <div key={f.label} style={{marginBottom:14}}>
                 <label htmlFor={`auth-${f.label.toLowerCase()}`} style={{display:"block",marginBottom:6}}><Mono>{f.label}</Mono></label>
                 <input id={`auth-${f.label.toLowerCase()}`} type={f.type} value={f.value}
                   onChange={e=>f.set(e.target.value)}
-                  onKeyDown={e=>e.key==="Enter"&&(mode==="signup"?handleSignup():handleLogin())}
+                  onKeyDown={e=>e.key==="Enter"&&(mode==="signup"?handleSignup():mode==="forgot"?handleForgotPassword():handleLogin())}
                   style={{width:"100%",padding:"12px 14px",background:C.bg,
                     border:`1px solid ${C.border}`,borderRadius:8,color:C.textPri,fontSize:14}}/>
               </div>
             ))}
             {error&&<p style={{color:C.red,fontSize:12,fontFamily:"'DM Mono',monospace",marginBottom:14}}>{error}</p>}
-            <button onClick={mode==="signup"?handleSignup:handleLogin} disabled={loading} style={{
+            <button onClick={mode==="signup"?handleSignup:mode==="forgot"?handleForgotPassword:handleLogin} disabled={loading} style={{
               width:"100%",padding:13,background:loading?C.accentDim:C.accent,
               border:"none",borderRadius:8,color:"#fff",fontWeight:700,fontSize:14,
               letterSpacing:"0.06em",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
-              {loading?<><Spinner/>{mode==="signup"?"Creating account...":"Authenticating..."}</>:(mode==="signup"?"Create Customer Account →":"Sign In →")}
+              {loading?<><Spinner/>{mode==="signup"?"Creating account...":mode==="forgot"?"Updating password...":"Authenticating..."}</>:(mode==="signup"?"Create Customer Account →":mode==="forgot"?"Reset Password →":"Sign In →")}
             </button>
             <div style={{marginTop:14,padding:"12px 14px",background:C.bg,
               borderRadius:8,border:`1px solid ${C.border}`}}>
               <Mono>DEMO CREDENTIALS</Mono>
               <p style={{fontSize:12,color:C.textSec,marginTop:6}}>
                 {role==="admin"&&"admin / admin123"}
-                {role==="customer"&&(mode==="signup"?"Create a new customer account here.":"customer1 / pass123")}
-                {role==="support"&&"support1 / pass123"}
+                {role==="customer"&&(mode==="signup"?"Create a new customer account here.":mode==="forgot"?"Enter your username and set a new password.":"customer1 / pass123")}
+                {role==="support"&&(mode==="forgot"?"Enter your username and set a new password.":"support1 / pass123")}
               </p>
             </div>
           </div>

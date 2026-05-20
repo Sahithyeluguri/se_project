@@ -7,6 +7,7 @@ jest.mock("../src/api.js", () => ({
   API: {
     login: jest.fn(),
     signup: jest.fn(),
+    forgotPassword: jest.fn(),
     myTickets: jest.fn(),
     agentTickets: jest.fn(),
     allTickets: jest.fn(),
@@ -174,6 +175,35 @@ describe("System | App portal flows", () => {
     expect(API.createTicket).not.toHaveBeenCalled();
   });
 
+  test("support agent can reset password with an existing username", async () => {
+    API.forgotPassword.mockResolvedValue({
+      message: "Password updated successfully",
+    });
+
+    render(<App />);
+
+    fireEvent.click(screen.getByRole("button", { name: /support agent/i }));
+    fireEvent.click(screen.getByRole("button", { name: /forgot password/i }));
+    fireEvent.change(screen.getByLabelText("USERNAME"), {
+      target: { value: "support1" },
+    });
+    fireEvent.change(screen.getByLabelText(/password/i), {
+      target: { value: "newpass123" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /reset password/i }));
+
+    await waitFor(() =>
+      expect(API.forgotPassword).toHaveBeenCalledWith({
+        username: "support1",
+        password: "newpass123",
+        role: "support",
+      }),
+    );
+
+    expect(await screen.findByText(/password updated successfully/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /sign in →/i })).toBeInTheDocument();
+  });
+
   test("support agent can resolve an assigned ticket", async () => {
     API.login.mockResolvedValue({
       id: 7,
@@ -216,7 +246,7 @@ describe("System | App portal flows", () => {
     fireEvent.change(screen.getByLabelText("PASSWORD"), {
       target: { value: "pass123" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    fireEvent.click(screen.getByRole("button", { name: /sign in →/i }));
 
     expect(await screen.findByText("Active Tickets")).toBeInTheDocument();
     expect(await screen.findByText("VPN is unavailable")).toBeInTheDocument();

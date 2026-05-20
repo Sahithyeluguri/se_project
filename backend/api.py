@@ -54,6 +54,25 @@ def get_ranker():
 # ---------------------------------------------------------------------------
 DB_PATH = os.environ.get("DB_PATH", _backend_path("supportai.db"))
 
+NOISE_PHRASES = {
+    "hi", "hii", "hiii", "hello", "hey", "yo", "sup",
+    "good morning", "good afternoon", "good evening",
+    "bye", "goodbye", "ok", "okay", "kk", "thanks", "thank you", "thx",
+}
+STOPWORDS = {
+    "a", "an", "the", "and", "or", "but", "to", "for", "of", "on", "in", "at",
+    "my", "me", "i", "we", "you", "it", "is", "are", "was", "were", "be", "been",
+    "am", "this", "that", "these", "those", "please", "kindly", "just", "need",
+}
+ISSUE_SIGNAL_WORDS = {
+    "access", "account", "api", "billing", "blocked", "broken", "bug", "cannot",
+    "cant", "charge", "charged", "checkout", "connect", "crash", "crashed", "delay",
+    "delayed", "down", "error", "failed", "fails", "failure", "issue", "invoice",
+    "login", "network", "order", "outage", "password", "payment", "problem",
+    "refund", "reset", "return", "returns", "security", "server", "slow", "support",
+    "ticket", "unavailable", "unauthorized", "vpn", "wifi", "wrong",
+}
+
 def init_db():
     with open(_backend_path("schema.sql"), encoding="utf-8") as f:
         sql = f.read()
@@ -72,6 +91,20 @@ def get_db():
         con.commit()
     finally:
         con.close()
+
+
+def _has_meaningful_ticket_content(subject: str = "", body: str = "") -> bool:
+    combined = f"{subject} {body}".strip().lower()
+    normalized = " ".join(
+        "".join(ch if ch.isalnum() or ch in {" ", "'"} else " " for ch in combined).split()
+    )
+    if not normalized or normalized in NOISE_PHRASES:
+        return False
+
+    tokens = normalized.split()
+    meaningful = [t for t in tokens if t not in STOPWORDS]
+    has_issue_signal = any(t in ISSUE_SIGNAL_WORDS or len(t) >= 7 for t in meaningful)
+    return has_issue_signal or len(meaningful) >= 3
 
 # ---------------------------------------------------------------------------
 # App
@@ -110,6 +143,11 @@ class SignupRequest(BaseModel):
     password: str
     name: str
     email: Optional[str] = None
+
+class ForgotPasswordRequest(BaseModel):
+    username: str
+    password: str
+    role: str
 
 class NewTicketRequest(BaseModel):
     customer_id: int
@@ -186,6 +224,29 @@ def signup(req: SignupRequest):
     data["role"] = "customer"
     return data
 
+@app.post("/auth/forgot-password")
+def forgot_password(req: ForgotPasswordRequest):
+    if req.role == "admin":
+        raise HTTPException(400, "Admin password cannot be reset here")
+    if req.role not in {"customer", "support"}:
+        raise HTTPException(400, "Invalid role")
+
+    table = "customers" if req.role == "customer" else "support_agents"
+    with get_db() as db:
+        existing = db.execute(
+            f"SELECT id FROM {table} WHERE username=?",
+            (req.username,),
+        ).fetchone()
+        if not existing:
+            raise HTTPException(404, "Username not found")
+
+        db.execute(
+            f"UPDATE {table} SET password=? WHERE username=?",
+            (req.password, req.username),
+        )
+
+    return {"message": "Password updated successfully"}
+
 # ---------------------------------------------------------------------------
 # Customers
 # ---------------------------------------------------------------------------
@@ -215,6 +276,12 @@ def customer_tickets(customer_id: int):
 
 @app.post("/tickets")
 def create_ticket(req: NewTicketRequest):
+    if not _has_meaningful_ticket_content(req.subject, req.body):
+        raise HTTPException(
+            422,
+            "Please describe an actual support issue before creating a ticket.",
+        )
+
     predictor = get_predictor()
     ranker    = get_ranker()
 
