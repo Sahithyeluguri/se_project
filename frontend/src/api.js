@@ -1,7 +1,10 @@
 // All backend calls go through here.
 // In local dev, leave VITE_API_BASE_URL unset so Vite proxies to localhost:8000.
-// For hosted builds, set VITE_API_BASE_URL to the deployed backend URL.
-const BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
+// In hosted builds, default to the deployed Hugging Face backend unless overridden.
+const IS_LOCALHOST =
+  typeof window !== "undefined" &&
+  ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+const BASE_URL = (import.meta.env.VITE_API_BASE_URL || (IS_LOCALHOST ? "" : "https://ueusj-supportai-backend.hf.space")).replace(/\/$/, "");
 
 async function readErrorMessage(res) {
   const text = await res.text().catch(() => "");
